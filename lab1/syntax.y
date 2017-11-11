@@ -3,6 +3,7 @@
     #include "lex.yy.c"
     Node* root;
     char errorStr[256];
+    //#define DEBUG 1
 %}
 %union {
     int address;
@@ -38,7 +39,7 @@ ExtDefList : ExtDef ExtDefList {$$ = initNode("ExtDefList","\0");addChild($$,$2)
 ExtDef : Specifier ExtDecList SEMI { $$ = initNode("ExtDef","\0");addChild($$,$3);addChild($$,$2);addChild($$,$1);}
     |   Specifier SEMI {$$ = initNode("ExtDef","\0");addChild($$,$2);addChild($$,$1);}
     |   Specifier FunDec CompSt {$$ = initNode("ExtDef","\0");addChild($$,$3);addChild($$,$2);addChild($$,$1);}
-    |   error SEMI {errorCount++;}
+    |   error SEMI {errorCount++;printf("Error type B at Line %d: syntax error.\n",yylineno);}
     ;
 ExtDecList : VarDec {$$ = initNode("ExtDecList","\0");addChild($$,$1);}
     |   VarDec  COMMA   ExtDecList { $$ = initNode("ExtDecList","\0");addChild($$,$3);addChild($$,$2);addChild($$,$1);}
@@ -83,6 +84,8 @@ Stmt : Exp SEMI {$$=initNode("Stmt","\0");addChild($$,$2);addChild($$,$1);}
     | IF LP Exp RP Stmt {$$=initNode("Stmt","\0");addChild($$,$5);addChild($$,$4);addChild($$,$3);addChild($$,$2);addChild($$,$1);}
     | IF LP Exp RP Stmt ELSE Stmt {$$=initNode("Stmt","\0");addChild($$,$7);addChild($$,$6);addChild($$,$5);addChild($$,$4);addChild($$,$3);addChild($$,$2);addChild($$,$1);}
     | WHILE LP Exp RP Stmt {$$=initNode("Stmt","\0");addChild($$,$5);addChild($$,$4);addChild($$,$3);addChild($$,$2);addChild($$,$1);}
+    | Exp error SEMI {errorCount++;printf("Error type B at Line %d: Missing \";\".\n",yylineno);}
+    | error SEMI {errorCount++;printf("Error type B at Line %d: syntax error.\n",yylineno);}
     ;
 
 /*------------------Local Definitions-----------------*/
@@ -117,6 +120,7 @@ Exp : Exp ASSIGNOP Exp {$$=initNode("Exp","\0");addChild($$,$3);addChild($$,$2);
     | ID {$$=initNode("Exp","\0");addChild($$,$1);}
     | INT {$$=initNode("Exp","\0");addChild($$,$1);}
     | FLOAT {$$=initNode("Exp","\0");addChild($$,$1);}
+    | Exp LB error SEMI {errorCount++;printf("Error type B at Line %d: Missing \"]\".\n",yylineno);}
     ;
 Args : Exp COMMA Args {$$=initNode("Args","\0");addChild($$,$3);addChild($$,$2);addChild($$,$1);}
     | Exp {$$=initNode("Args","\0");addChild($$,$1);}
@@ -137,6 +141,9 @@ int main(int argc,char *argv[])
     root = NULL;
     yylineno = 1;
     yyrestart(fp);
+#ifdef DEBUG
+	yydebug = 1;
+#endif
     yyparse();
     if(errorCount == 0)
     {

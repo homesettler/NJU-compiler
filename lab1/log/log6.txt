@@ -1,0 +1,2 @@
+Error type B at line 3: illegal octal number "09".
+Error type B at line 4: illegal hex number "0x3G".

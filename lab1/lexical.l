@@ -5,8 +5,7 @@
 %}
 
 comment_line "//"[^\n]*
-comment_line_s "/*"(.|\r|\n)*?"*/"
-comment_line_s_illegal "/*"?(.|\t|\n)*?"*/"(.|\r|\n)*?"*/"
+comment_line_s "/*"[^"*/"]*"*/"
 ws [ \t]+
 decimal ([1-9][0-9]*)|0
 oct 0[0-7]*
@@ -28,12 +27,11 @@ relop ">"|"<"|">="|"<="|"=="|"!="
 
 {comment_line} {;}
 {comment_line_s} {;}
-{comment_line_s_illegal} {errorCount++;printf("Error type B at line \"%d\": illegal comments.\n",yylineno);}
 {ws} {;}
 \n {;}
+{integer} {yylval.node = initNode("INT",yytext);return INT;}
 {oct_illegal} {errorCount++;printf("Error type B at line %d: illegal octal number \"%s\".\n",yylineno,yytext); return INT;}
 {hex_illegal} {errorCount++;printf("Error type B at line %d: illegal hex number \"%s\".\n",yylineno,yytext);return INT;}
-{integer} {yylval.node = initNode("INT",yytext);return INT;}
 {float1} {yylval.node = initNode("FLOAT",yytext);return FLOAT;}
 {float2} {yylval.node = initNode("FLOAT",yytext);return FLOAT;}
 {float_ill1} {errorCount++;printf("Error type B at line %d: illegal float \"%s\".\n",yylineno,yytext);return FLOAT;}

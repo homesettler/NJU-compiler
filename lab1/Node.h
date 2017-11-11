@@ -7,6 +7,7 @@ typedef struct node
 {
     char name[16];
     char value[32];
+    int lineno;
     struct node* child;
     struct node* brother; 
 }Node;
