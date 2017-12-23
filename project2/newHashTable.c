@@ -77,10 +77,21 @@ HashNode *hashCheck(HashTable *hashTable, char *name, int kind, int depth)
 	HashNode *temp = hashTable->table[address];
 	while (temp != NULL)
 	{
-		if (!strcmp(name, temp->name) && temp->depth == depth&&kind == temp->kind)
+		if (depth != -1)//这里要找对应作用域的Node
 		{
-			return temp;//找到了对应Hash节点
+			if (!strcmp(name, temp->name) && temp->depth == depth&&kind == temp->kind)
+			{
+				return temp;//找到了对应Hash节点
+			}
 		}
+		else if (depth == -1)//这里不需指明作用域范围
+		{
+			if (!strcmp(name, temp->name) &&kind == temp->kind)
+			{
+				return temp;
+			}
+		}
+		temp = temp->nextInHash;
 	}
 	return NULL;
 }
@@ -116,6 +127,10 @@ Stack *stackPop(Stack *top)
 		t = t->nextInStack;
 		deleteHashNode(dtemp);
 	}
+	Stack *tempStack = top;
+	top = top->nextStack;
+	free(tempStack);
+	return top;
 }
 void deleteFieldList(FieldList *structure)
 {
@@ -191,13 +206,61 @@ void deleteHashNode(HashNode *node)
 			node->nextInHash->preInHash = node->preInHash;
 		}
 		//该节点的类型，若为Type则按照Type删除，若为Func则按照Func删除。
-		if (node->kind == TYPE_KIND)
+		//if (node->kind == TYPE_KIND)
+		//{
+		//	deleteType(node->type);
+		//}
+		//else if (node->kind == FUNC_KIND)
+		//{
+		//	deleteFunc(node->func);
+		//}
+	}
+}
+
+int typeCmp(Type *t1, Type *t2)
+{
+	if (t1 == NULL&&t2 == NULL)
+		return 1;
+	else if((t1==NULL&&t2!=NULL)||(t1!=NULL&&t2==NULL))
+	{
+		return 0;
+	}
+	if (t1->kind == t2->kind)
+	{
+		if (t1->kind == BASIC_KIND)
 		{
-			deleteType(node->type);
+			return t1->detail.basic == t2->detail.basic;
 		}
-		else if (node->kind == FUNC_KIND)
+		else if (t1->kind == ARRAY_KIND||t1->kind == INTARRAY_KIND||t1->kind == FLOATARRAY_KIND)
 		{
-			deleteFunc(node->func);
+			return typeCmp(t1->detail.array.elem, t2->detail.array.elem);
+		}
+		else if (t1->kind == STRUCT_KIND)
+		{
+			return FieldCmp(t1->detail.structure, t2->detail.structure);
 		}
 	}
+	else
+	{
+		return 0;
+	}
+}
+
+int FieldCmp(FieldList *f1, FieldList *f2)
+{
+
+	if (f1 == NULL&&f2 == NULL)
+	{
+		return 1;
+	}
+	else if ((f1 == NULL&&f2 != NULL) || (f1 != NULL&&f2 == NULL))
+	{
+		return 0;
+	}
+	if (typeCmp(f1->type, f2->type))
+	{
+		return FieldCmp(f1->nextFieldList, f2->nextFieldList);
+	}
+	else
+		return 0;
 }
