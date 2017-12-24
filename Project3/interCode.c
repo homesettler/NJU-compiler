@@ -854,24 +854,39 @@ void translate_Stmt(Node *root)
 		memset(ret1, 0, sizeof(code));
 		ret1->kind = LABEL_CODE;
 		ret1->detail.singleop.op = label1;
+
 		insertCode(ret1);
+
 		translate_Cond(child->brother->brother, label2, label3);
+
 		code *ret2 = (code *)malloc(sizeof(code));
 		memset(ret2, 0, sizeof(code));
 		ret2->kind = LABEL_CODE;
 		ret2->detail.singleop.op = label2;
+
 		insertCode(ret2);
+
+
 		translate_Stmt(child->brother->brother->brother->brother);
+
+
 		code *ret3 = (code *)malloc(sizeof(code));
 		memset(ret3, 0, sizeof(code));
 		ret3->kind = GOTO_CODE;
 		ret3->detail.singleop.op = label1;
+
 		insertCode(ret3);
+
 		code *ret4 = (code *)malloc(sizeof(code));
 		memset(ret4, 0, sizeof(code));
 		ret4->kind = LABEL_CODE;
 		ret4->detail.singleop.op = label3;
+
 		insertCode(ret4);
+	}
+	else if (!strcmp(child->name, "CompSt"))
+	{
+		translate_CompSt(child);
 	}
 }
 
@@ -949,6 +964,87 @@ void translate_Cond(Node *root, operand *label_true, operand *label_false)
 			insertCode(ret2);
 		}
 	}
+}
+
+void translate_CompSt(Node *root)
+{
+	Node *child = root->child->brother;//DefList
+	if (!strcmp(child->name, "DefList"))
+	{
+		translate_DefList(child);
+		
+		translate_StmtList(child->brother);
+	}
+	else
+	{
+		
+		translate_StmtList(child);
+	}
+}
+void translate_DefList(Node *root)
+{
+	if (root == NULL)
+	{
+		return;
+	}
+	Node *child = root->child;
+	if (child == NULL)
+	{
+		return;
+	}
+	
+	translate_Def(child);
+	
+	translate_DefList(child->brother);
+}
+
+void translate_Def(Node *root)
+{
+	translate_DecList(root->child->brother);
+}
+
+void translate_DecList(Node *root)
+{
+	Node *child = root->child;
+
+	translate_Dec(child);
+	
+	if (child->brother != NULL)
+	{
+		translate_DecList(child->brother->brother);
+	}
+}
+void translate_StmtList(Node *root)
+{
+	if (root == NULL)
+	{
+		return;
+	}
+	Node *child = root->child;
+	if (child == NULL)
+	{
+		return;
+	}
+	translate_Stmt(child);
+	translate_StmtList(child->brother);
+}
+void translate_Dec(Node *root)
+{
+	Node *child = root->child;
+	operand *o = (operand *)malloc(sizeof(operand));
+	memset(o, 0, sizeof(operand));
+	o->kind = VAR_OP;
+	
+	if (!strcmp(child->child->name, "VarDec"))
+	{
+		printf("Cannot translate: Code contains variables of multi-dimensional array type or parameters of array type. ");
+	}
+	else
+	{
+		o->value = child->child->value;
+	}
+	if(child->brother!=NULL)
+		translate_Basic_Exp(child->brother->brother, o);
 }
 
 int checkOutStructSize(char *name)

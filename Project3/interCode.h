@@ -29,6 +29,7 @@
 #define PARAM_CODE 0x11
 #define READ_CODE 0x12
 #define WRITE_CODE 0x13
+#define WHILE_CODE 0x14
 
 typedef struct _operand operand;
 typedef struct _code code;
@@ -103,6 +104,12 @@ void translate_Args(Node *root, operand **arglist);
 void translate_Stmt(Node *root);
 void translate_Cond(Node *root, operand *label_true, operand *label_false);
 operand *new_temp();
+void translate_CompSt(Node *root);
+void translate_DefList(Node *root);
+void translate_Def(Node *root);
+void translate_DecList(Node *root);
+void translate_StmtList(Node *root);
+void translate_Dec(Node *root);
 
 #endif
 

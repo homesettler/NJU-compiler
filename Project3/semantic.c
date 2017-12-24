@@ -118,6 +118,7 @@ void ExtDef(Node *root)
 			}
 			//==================================
 			tempfun->isDef = 1;//将定义状态改成已定义
+			translate_CompSt(child->brother->brother);
 			CompSt(child->brother->brother, tempfun->retType, globalHashStack);
 			//这里需要弹出栈
 			globalHashStack = stackPop(globalHashStack);
@@ -136,6 +137,7 @@ void ExtDef(Node *root)
 
 void CompSt(Node *root, Type *retType, Stack *globalstack)
 {
+	
 #ifdef DEBUG
 	printf("CompSt->LC DefList StmtList RC\n");
 #endif
@@ -161,6 +163,7 @@ void CompSt(Node *root, Type *retType, Stack *globalstack)
 	{
 		globalHashStack = stackPop(globalHashStack);
 	}
+	
 }
 
 void StmtList(Node *root, Type *retType)
@@ -180,9 +183,7 @@ void StmtList(Node *root, Type *retType)
 #endif
 
 	Stmt(root->child, retType);
-#ifdef INSERTCODE
-	translate_Stmt(root->child);
-#endif
+
 	StmtList(root->child->brother, retType);
 }
 void Stmt(Node *root, Type *retType)
@@ -616,13 +617,13 @@ void Dec(Node *root,Type *type,FieldList *structure)
 			//需要判断左右量表类型是否相同
 			Type *newType = Exp(child->brother->brother);
 
-#ifdef INSERTCODE
-			operand *o = (operand *)malloc(sizeof(operand));
-			memset(o, 0, sizeof(operand));
-			o->kind = VAR_OP;
-			o->value = newHashNode->name;
-			translate_Basic_Exp(child->brother->brother, o);
-#endif
+//#ifdef INSERTCODE
+//			operand *o = (operand *)malloc(sizeof(operand));
+//			memset(o, 0, sizeof(operand));
+//			o->kind = VAR_OP;
+//			o->value = newHashNode->name;
+//			translate_Basic_Exp(child->brother->brother, o);
+//#endif
 			
 			if (!typeCmp(newType, type))
 			{
