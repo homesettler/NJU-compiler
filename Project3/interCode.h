@@ -29,7 +29,6 @@
 #define PARAM_CODE 0x11
 #define READ_CODE 0x12
 #define WRITE_CODE 0x13
-#define WHILE_CODE 0x14
 
 typedef struct _operand operand;
 typedef struct _code code;
