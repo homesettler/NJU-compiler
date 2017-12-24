@@ -180,6 +180,9 @@ void StmtList(Node *root, Type *retType)
 #endif
 
 	Stmt(root->child, retType);
+#ifdef INSERTCODE
+	translate_Stmt(root->child);
+#endif
 	StmtList(root->child->brother, retType);
 }
 void Stmt(Node *root, Type *retType)
@@ -189,9 +192,7 @@ void Stmt(Node *root, Type *retType)
 		return;
 	}
 
-#ifdef INSERTCODE
-	translate_Stmt(root);
-#endif
+
 
 	Node *child = root->child;
 	if (!strcmp(child->name, "Exp"))

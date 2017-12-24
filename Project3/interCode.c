@@ -1,5 +1,6 @@
 #include "interCode.h"
 #include "Node.h"
+#include "newHashTable.h"
 #define INSERTCODEDEBUG
 code *codeRoot = NULL;
 code *codeTail = NULL;
@@ -95,7 +96,7 @@ void printcode(char *outfilename)
 				printf("%s := ", troot->detail.doubleop.result->value);
 #endif
 			}
-			if (troot->detail.doubleop.op1->kind = TEMP_OP)
+			if (troot->detail.doubleop.op1->kind == TEMP_OP)
 			{
 				fprintf(fp, "t%d + ", troot->detail.doubleop.op1->no);
 #ifdef INSERTCODEDEBUG
@@ -116,7 +117,7 @@ void printcode(char *outfilename)
 				printf("%s + ", troot->detail.doubleop.op1->value);
 #endif
 			}
-			if (troot->detail.doubleop.op2->kind = TEMP_OP)
+			if (troot->detail.doubleop.op2->kind == TEMP_OP)
 			{
 				fprintf(fp, "t%d\n", troot->detail.doubleop.op2->no);
 #ifdef INSERTCODEDEBUG
@@ -154,7 +155,7 @@ void printcode(char *outfilename)
 				printf("%s := ", troot->detail.doubleop.result->value);
 #endif
 			}
-			if (troot->detail.doubleop.op1->kind = TEMP_OP)
+			if (troot->detail.doubleop.op1->kind == TEMP_OP)
 			{
 				fprintf(fp, "t%d - ", troot->detail.doubleop.op1->no);
 #ifdef INSERTCODEDEBUG
@@ -175,7 +176,7 @@ void printcode(char *outfilename)
 				printf("%s - ", troot->detail.doubleop.op1->value);
 #endif
 			}
-			if (troot->detail.doubleop.op2->kind = TEMP_OP)
+			if (troot->detail.doubleop.op2->kind == TEMP_OP)
 			{
 				fprintf(fp, "t%d\n", troot->detail.doubleop.op2->no);
 #ifdef INSERTCODEDEBUG
@@ -207,7 +208,7 @@ void printcode(char *outfilename)
 			{
 				fprintf(fp, "%s := ", troot->detail.doubleop.result->value);
 			}
-			if (troot->detail.doubleop.op1->kind = TEMP_OP)
+			if (troot->detail.doubleop.op1->kind == TEMP_OP)
 			{
 				fprintf(fp, "t%d * ", troot->detail.doubleop.op1->no);
 			}
@@ -219,7 +220,7 @@ void printcode(char *outfilename)
 			{
 				fprintf(fp, "%s * ", troot->detail.doubleop.op1->value);
 			}
-			if (troot->detail.doubleop.op2->kind = TEMP_OP)
+			if (troot->detail.doubleop.op2->kind == TEMP_OP)
 			{
 				fprintf(fp, "t%d\n", troot->detail.doubleop.op2->no);
 			}
@@ -242,7 +243,7 @@ void printcode(char *outfilename)
 			{
 				fprintf(fp, "%s := ", troot->detail.doubleop.result->value);
 			}
-			if (troot->detail.doubleop.op1->kind = TEMP_OP)
+			if (troot->detail.doubleop.op1->kind == TEMP_OP)
 			{
 				fprintf(fp, "t%d / ", troot->detail.doubleop.op1->no);
 			}
@@ -254,7 +255,7 @@ void printcode(char *outfilename)
 			{
 				fprintf(fp, "%s / ", troot->detail.doubleop.op1->value);
 			}
-			if (troot->detail.doubleop.op2->kind = TEMP_OP)
+			if (troot->detail.doubleop.op2->kind == TEMP_OP)
 			{
 				fprintf(fp, "t%d\n", troot->detail.doubleop.op2->no);
 			}
@@ -280,7 +281,7 @@ void printcode(char *outfilename)
 #ifdef INSERTCODEDEBUG
 			printf("IF ");
 #endif
-			if (troot->detail.tribleop.x->kind = TEMP_OP)
+			if (troot->detail.tribleop.x->kind == TEMP_OP)
 			{
 				fprintf(fp, "t%d ", troot->detail.tribleop.x->no);
 #ifdef INSERTCODEDEBUG
@@ -305,7 +306,7 @@ void printcode(char *outfilename)
 #ifdef INSERTCODEDEBUG
 			printf("%s ", troot->relop);
 #endif
-			if (troot->detail.tribleop.y->kind = TEMP_OP)
+			if (troot->detail.tribleop.y->kind == TEMP_OP)
 			{
 				fprintf(fp, "t%d GOTO label%d\n", troot->detail.tribleop.y->no,troot->detail.tribleop.gotoLabel->no);
 #ifdef INSERTCODEDEBUG
@@ -461,7 +462,11 @@ operand *new_label()
 void translate_Basic_Exp(Node *root, operand *place)
 {
 	Node *child = root->child;
-	if (!strcmp(child->name,"INT"))
+	if (!strcmp(child->name, "LP"))
+	{
+		translate_Basic_Exp(child->brother, place);
+	}
+	else if (!strcmp(child->name,"INT"))
 	{
 		int value = atoi(child->value);
 		code *ret = (code *)malloc(sizeof(code));
@@ -781,40 +786,63 @@ void translate_Stmt(Node *root)
 	}
 	else if(!strcmp(child->name,"IF"))
 	{
-		operand *label1 = new_label();
-		operand *label2 = new_label();
-		translate_Cond(child->brother->brother, label1, label2);
-		code *ret1 = (code *)malloc(sizeof(code));
-		memset(ret1, 0, sizeof(code));
-		ret1->kind = LABEL_CODE;
-		ret1->detail.singleop.op = label1;
-		insertCode(ret1);	
-		translate_Stmt(child->brother->brother->brother->brother);
-		code *ret2 = (code *)malloc(sizeof(code));
-		memset(ret2, 0, sizeof(code));
-		ret2->kind = LABEL_CODE;
-		ret2->detail.singleop.op = label2;
-		
-
-		if (child->brother->brother->brother->brother->brother != NULL)
+		if (child->brother->brother->brother->brother->brother == NULL)
 		{
+			operand *label1 = new_label();
+			operand *label2 = new_label();
+			translate_Cond(child->brother->brother, label1, label2);
+			code *ret1 = (code *)malloc(sizeof(code));
+			memset(ret1, 0, sizeof(code));
+			ret1->kind = LABEL_CODE;
+			ret1->detail.singleop.op = label1;
+			insertCode(ret1);
+			translate_Stmt(child->brother->brother->brother->brother);
+			code *ret2 = (code *)malloc(sizeof(code));
+			memset(ret2, 0, sizeof(code));
+			ret2->kind = LABEL_CODE;
+			ret2->detail.singleop.op = label2;
+			insertCode(ret2);
+		}
+
+		else if (child->brother->brother->brother->brother->brother != NULL)
+		{
+			operand *label1 = new_label();
+			operand *label2 = new_label();
+			//code1
+			translate_Cond(child->brother->brother, label1, label2);
+			//label1
+			code *ret1 = (code *)malloc(sizeof(code));
+			memset(ret1, 0, sizeof(code));
+			ret1->kind = LABEL_CODE;
+			ret1->detail.singleop.op = label1;
+			insertCode(ret1);
+			//code2
+			translate_Stmt(child->brother->brother->brother->brother);
+
+
+			code *ret2 = (code *)malloc(sizeof(code));
+			memset(ret2, 0, sizeof(code));
+			ret2->kind = LABEL_CODE;
+			ret2->detail.singleop.op = label2;
 			operand *label3 = new_label();
 			code *ret3 = (code *)malloc(sizeof(code));
 			memset(ret3, 0, sizeof(code));
 			ret3->kind = GOTO_CODE;
 			ret3->detail.singleop.op = label3;
+			//gotoLabel3
 			insertCode(ret3);
+
+			//label2
 			insertCode(ret2);
+			//code3
 			translate_Stmt(child->brother->brother->brother->brother->brother->brother);
+			//label3
 			code *ret4 = (code *)malloc(sizeof(code));
 			memset(ret4, 0, sizeof(code));
 			ret4->kind = LABEL_CODE;
 			ret4->detail.singleop.op = label3;
 			insertCode(ret4);
-		}
-		else
-		{
-			insertCode(ret2);
+			
 		}
 	}
 	else if (!strcmp(child->name, "WHILE"))
@@ -921,4 +949,10 @@ void translate_Cond(Node *root, operand *label_true, operand *label_false)
 			insertCode(ret2);
 		}
 	}
+}
+
+int checkOutStructSize(char *name)
+{
+	HashNode *structNode = hashCheck(globalHashTable, name, TYPE_KIND, 0);
+
 }
